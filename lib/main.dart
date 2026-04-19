@@ -1,46 +1,41 @@
-// ignore_for_file: prefer_const_constructors
-
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:project_a/models/ach_lists.dart';
-import 'package:project_a/models/achievements_model.dart';
-import 'package:project_a/screens/home/home_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'screens/home/home_screen.dart';
 
-const achBoxName = "achievement_box";
-const finishedAchBoxName = "finished_achievement_box";
-
-Future<void> main() async {
-  await Hive.initFlutter();
-  Hive.registerAdapter(AchievementAdapter());
-  await Hive.openBox<Achievement>(achBoxName);
-  await Hive.openBox<Achievement>(finishedAchBoxName);
-  runApp(const HomePage());
+void main() {
+  runApp(const MyApp());
 }
 
-class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  late Box<Achievement> achBox;
-  late Box<Achievement> finishedAchBox;
-
-  @override
-  void initState() {
-    super.initState();
-    achBox = Hive.box(achBoxName);
-    finishedAchBox = Hive.box(finishedAchBoxName);
-    achBox.addAll(achList);
-  }
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        theme: ThemeData(fontFamily: "Tiro Devanagari Sanskrit"),
-        debugShowCheckedModeBanner: false,
-        home: HomeScreen(achBox: achBox));
+      title: 'Achievement Tracker',
+      debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.dark,
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF0F172A), // Modern deep slate
+        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF3B82F6),
+          secondary: Color(0xFF10B981),
+          surface: Color(0xFF1E293B),
+        ),
+      ),
+      theme: ThemeData(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: Colors.white,
+        textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
+        colorScheme: const ColorScheme.light(
+          primary: Color(0xFF3B82F6),
+          secondary: Color(0xFF10B981),
+          surface: Colors.white,
+        ),
+      ),
+      home: const HomeScreen(),
+    );
   }
 }
