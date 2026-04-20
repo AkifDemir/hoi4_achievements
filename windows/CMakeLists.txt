@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
-project(project_a LANGUAGES CXX)
+project(Anthy LANGUAGES CXX)
 
-set(BINARY_NAME "project_a")
+set(BINARY_NAME "Anthy")
 
 cmake_policy(SET CMP0063 NEW)
 

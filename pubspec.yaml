@@ -1,4 +1,4 @@
-name: project_a
+name: Anthy
 description: A new Flutter project.
 
 # The following line prevents the package from being accidentally published to
@@ -39,6 +39,7 @@ dependencies:
   http: ^1.6.0
   xml: ^6.6.1
   cached_network_image: ^3.4.1
+  shared_preferences: ^2.5.2
 
 dev_dependencies:
   flutter_test:

@@ -9,12 +9,14 @@ class AchievementsScreen extends StatefulWidget {
   final String appId;
   final String title;
   final Color accentColor;
+  final String steamId;
 
   const AchievementsScreen({
     super.key,
     required this.appId,
     required this.title,
     required this.accentColor,
+    required this.steamId,
   });
 
   @override
@@ -33,7 +35,8 @@ class _AchievementsScreenState extends State<AchievementsScreen>
   @override
   void initState() {
     super.initState();
-    _achievementsFuture = _steamService.getAchievements(widget.appId);
+    _achievementsFuture =
+        _steamService.getAchievements(widget.steamId, widget.appId);
     _tabController = TabController(length: 3, vsync: this);
     _searchController.addListener(() {
       setState(() {
@@ -51,7 +54,8 @@ class _AchievementsScreenState extends State<AchievementsScreen>
 
   Future<void> _refresh() async {
     setState(() {
-      _achievementsFuture = _steamService.getAchievements(widget.appId);
+      _achievementsFuture =
+          _steamService.getAchievements(widget.steamId, widget.appId);
     });
   }
 
@@ -101,11 +105,14 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                             fontSize: 18,
                             fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
-                    Text(
-                      '${snapshot.error}',
-                      textAlign: TextAlign.center,
-                      style:
-                          const TextStyle(color: Colors.white38, fontSize: 14),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        'İnternet bağlantınız yok veya sunuculara ulaşılamıyor. Lütfen bağlantınızı kontrol edip tekrar deneyin.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white38, fontSize: 14, height: 1.4),
+                      ),
                     ),
                     const SizedBox(height: 20),
                     TextButton.icon(
@@ -230,81 +237,117 @@ class _AchievementsScreenState extends State<AchievementsScreen>
   }
 
   Widget _buildHeader(int unlockedCount, int totalCount, double progress) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF0F1520), Color(0xFF0A0E1A)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 50, 20, 60),
-          child: Row(
-            children: [
-              // Circular progress
-              SizedBox(
-                width: 90,
-                height: 90,
-                child: CustomPaint(
-                  painter: _CircularProgressPainter(
-                    progress: progress,
-                    color: widget.accentColor,
-                    backgroundColor: Colors.white.withAlpha(15),
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${(progress * 100).toStringAsFixed(0)}%',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 24),
-              // Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      widget.title,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildStatRow(
-                        Icons.emoji_events_outlined,
-                        '$unlockedCount kazanılmış başarım',
-                        const Color(0xFF10B981)),
-                    const SizedBox(height: 6),
-                    _buildStatRow(
-                        Icons.lock_outline_rounded,
-                        '${totalCount - unlockedCount} bekleyen başarım',
-                        Colors.white38),
-                    const SizedBox(height: 6),
-                    _buildStatRow(Icons.grid_view_rounded,
-                        'Toplam $totalCount başarım', Colors.white24),
-                  ],
-                ),
-              ),
-            ],
+    final heroUrl =
+        'https://cdn.akamai.steamstatic.com/steam/apps/${widget.appId}/library_hero.jpg';
+
+    return Stack(
+      children: [
+        // Background: library hero image
+        Positioned.fill(
+          child: ShaderMask(
+            shaderCallback: (bounds) => LinearGradient(
+              colors: [
+                Colors.black.withAlpha(60),
+                Colors.black.withAlpha(30),
+                Colors.transparent,
+              ],
+              stops: const [0.0, 0.6, 1.0],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ).createShader(bounds),
+            blendMode: BlendMode.dstIn,
+            child: CachedNetworkImage(
+              imageUrl: heroUrl,
+              fit: BoxFit.cover,
+              errorWidget: (_, __, ___) => const SizedBox.shrink(),
+              placeholder: (_, __) => const SizedBox.shrink(),
+            ),
           ),
         ),
-      ),
+        // Dark gradient overlay for readability
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF0F1520).withAlpha(180),
+                  const Color(0xFF0A0E1A).withAlpha(220),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+        ),
+        // Content
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 50, 20, 60),
+            child: Row(
+              children: [
+                // Circular progress
+                SizedBox(
+                  width: 90,
+                  height: 90,
+                  child: CustomPaint(
+                    painter: _CircularProgressPainter(
+                      progress: progress,
+                      color: widget.accentColor,
+                      backgroundColor: Colors.white.withAlpha(15),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${(progress * 100).toStringAsFixed(0)}%',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 24),
+                // Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.title,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildStatRow(
+                          Icons.emoji_events_outlined,
+                          '$unlockedCount kazanılmış başarım',
+                          const Color(0xFF10B981)),
+                      const SizedBox(height: 6),
+                      _buildStatRow(
+                          Icons.lock_outline_rounded,
+                          '${totalCount - unlockedCount} bekleyen başarım',
+                          Colors.white38),
+                      const SizedBox(height: 6),
+                      _buildStatRow(Icons.grid_view_rounded,
+                          'Toplam $totalCount başarım', Colors.white24),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
