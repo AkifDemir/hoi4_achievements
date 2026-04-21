@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/steam_achievement.dart';
@@ -404,109 +403,107 @@ class _AchievementsScreenState extends State<AchievementsScreen>
       margin: const EdgeInsets.only(bottom: 10),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: ach.isUnlocked
+                ? widget.accentColor
+                    .withAlpha(15) // Slightly more opaque since we removed blur
+                : Colors.white.withAlpha(8),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
               color: ach.isUnlocked
-                  ? widget.accentColor.withAlpha(10)
-                  : Colors.white.withAlpha(6),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: ach.isUnlocked
-                    ? widget.accentColor.withAlpha(35)
-                    : Colors.white.withAlpha(8),
-              ),
+                  ? widget.accentColor.withAlpha(35)
+                  : Colors.white.withAlpha(8),
             ),
-            child: Row(
-              children: [
-                // Achievement icon
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: CachedNetworkImage(
-                    imageUrl: ach.displayIcon,
+          ),
+          child: Row(
+            children: [
+              // Achievement icon
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: CachedNetworkImage(
+                  imageUrl: ach.displayIcon,
+                  width: 52,
+                  height: 52,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
                     width: 52,
                     height: 52,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(8),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Center(
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white24),
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
                       width: 52,
                       height: 52,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withAlpha(8),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Center(
-                        child: SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white24),
-                        ),
+                      color: Colors.black26,
+                      child: const Icon(Icons.broken_image,
+                          color: Colors.white24, size: 20)),
+                ),
+              ),
+              const SizedBox(width: 14),
+              // Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      ach.name,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: ach.isUnlocked ? Colors.white : Colors.white70,
                       ),
                     ),
-                    errorWidget: (context, url, error) => Container(
-                        width: 52,
-                        height: 52,
-                        color: Colors.black26,
-                        child: const Icon(Icons.broken_image,
-                            color: Colors.white24, size: 20)),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                // Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                    if (ach.description.isNotEmpty) ...[
+                      const SizedBox(height: 4),
                       Text(
-                        ach.name,
+                        ach.description,
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: ach.isUnlocked ? Colors.white : Colors.white70,
+                          fontSize: 12,
+                          color: Colors.white.withAlpha(80),
+                          height: 1.3,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      if (ach.description.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          ach.description,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withAlpha(80),
-                            height: 1.3,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
                     ],
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                // Status badge
-                if (ach.isUnlocked)
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withAlpha(20),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.check_rounded,
-                        color: Color(0xFF10B981), size: 16),
-                  )
-                else
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withAlpha(6),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.lock_outline_rounded,
-                        color: Colors.white.withAlpha(40), size: 16),
+              ),
+              const SizedBox(width: 10),
+              // Status badge
+              if (ach.isUnlocked)
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withAlpha(20),
+                    shape: BoxShape.circle,
                   ),
-              ],
-            ),
+                  child: const Icon(Icons.check_rounded,
+                      color: Color(0xFF10B981), size: 16),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.lock_outline_rounded,
+                      color: Colors.white.withAlpha(40), size: 16),
+                ),
+            ],
           ),
         ),
       ),

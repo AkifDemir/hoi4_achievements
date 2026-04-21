@@ -20,6 +20,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late Animation<double> _fadeAnimation;
 
   String _steamId = '';
+  String _steamId64 = '';
+  String _steamName = '';
+  String _steamAvatar = '';
   List<GameEntry> _games = [];
   bool _loading = true;
 
@@ -49,6 +52,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Future<void> _loadData() async {
     _steamId = await _settings.getSteamId();
+    _steamId64 = await _settings.getSteamId64();
+    _steamName = await _settings.getProfileName();
+    _steamAvatar = await _settings.getProfileAvatar();
     _games = await _settings.getGames();
     setState(() => _loading = false);
     _fadeController.forward();
@@ -76,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           appId: game.appId,
           title: game.title,
           accentColor: Color(game.colorValue),
-          steamId: _steamId,
+          steamId: _steamId64.isNotEmpty ? _steamId64 : _steamId,
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) =>
             FadeTransition(opacity: animation, child: child),
@@ -195,8 +201,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
                               try {
                                 // Fetch game name and icon from Steam
+                                final idToSearch = _steamId64.isNotEmpty ? _steamId64 : _steamId;
                                 final info =
-                                    await _steam.getGameInfo(_steamId, appId);
+                                    await _steam.getGameInfo(idToSearch, appId);
 
                                 final color =
                                     _palette[_games.length % _palette.length];
@@ -246,6 +253,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // ─── Change Steam ID Dialog ───
   Future<void> _showSteamIdDialog({bool dismissible = true}) async {
     final ctrl = TextEditingController(text: _steamId);
+    bool isLoading = false;
+    String? errorText;
+
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -253,80 +263,122 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       enableDrag: dismissible,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Padding(
-          padding:
-              EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-          child: Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFF141B2D),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                    width: 40,
-                    height: 4,
+        return StatefulBuilder(builder: (ctx, setSheetState) {
+          return Padding(
+            padding:
+                EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFF141B2D),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(2))),
+                  const SizedBox(height: 20),
+                  const Text('Steam Profili',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 6),
+                  Text('Custom URL adını veya Steam ID gir',
+                      style: TextStyle(
+                          color: Colors.white.withAlpha(100), fontSize: 13)),
+                  const SizedBox(height: 20),
+                  Container(
                     decoration: BoxDecoration(
-                        color: Colors.white24,
-                        borderRadius: BorderRadius.circular(2))),
-                const SizedBox(height: 20),
-                const Text('Steam Profili',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700)),
-                const SizedBox(height: 6),
-                Text('Custom URL adını veya Steam ID gir',
-                    style: TextStyle(
-                        color: Colors.white.withAlpha(100), fontSize: 13)),
-                const SizedBox(height: 20),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(8),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.white.withAlpha(12)),
-                  ),
-                  child: TextField(
-                    controller: ctrl,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.person_outline,
-                          color: Colors.white.withAlpha(50)),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                      color: Colors.white.withAlpha(8),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                          color: errorText != null
+                              ? Colors.redAccent.withAlpha(100)
+                              : Colors.white.withAlpha(12)),
+                    ),
+                    child: TextField(
+                      controller: ctrl,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.person_outline,
+                            color: Colors.white.withAlpha(50)),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final id = ctrl.text.trim();
-                      if (id.isNotEmpty) {
-                        await _settings.setSteamId(id);
-                        setState(() => _steamId = id);
-                        if (ctx.mounted) Navigator.pop(ctx);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3B82F6),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                  if (errorText != null) ...[
+                    const SizedBox(height: 8),
+                    Text(errorText!,
+                        style: const TextStyle(
+                            color: Colors.redAccent, fontSize: 12)),
+                  ],
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: isLoading
+                          ? null
+                          : () async {
+                              final id = ctrl.text.trim();
+                              if (id.isNotEmpty) {
+                                setSheetState(() {
+                                  isLoading = true;
+                                  errorText = null;
+                                });
+                                try {
+                                  // Profil doğrulaması ve verilerin çekilmesi
+                                  final profile = await _steam.getUserProfile(id);
+
+                                  await _settings.setSteamId(id);
+                                  await _settings.setSteamId64(profile.steamId64);
+                                  await _settings.setProfileName(profile.steamId);
+                                  await _settings.setProfileAvatar(profile.avatarFull);
+
+                                  setState(() {
+                                    _steamId = id;
+                                    _steamId64 = profile.steamId64;
+                                    _steamName = profile.steamId;
+                                    _steamAvatar = profile.avatarFull;
+                                  });
+                                  if (ctx.mounted) Navigator.pop(ctx);
+                                } catch (e) {
+                                  setSheetState(() {
+                                    isLoading = false;
+                                    errorText = 'Profil bulunamadı veya bağlantı hatası.';
+                                  });
+                                }
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3B82F6),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: isLoading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
+                          : const Text('Kaydet',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w600)),
                     ),
-                    child: const Text('Kaydet',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
+          );
+        });
       },
     );
   }
@@ -548,14 +600,37 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)]),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Center(
-                    child: Text(
-                      _steamId.isNotEmpty ? _steamId[0].toUpperCase() : '?',
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold),
-                    ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: _steamAvatar.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: _steamAvatar,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) => const Center(
+                                child: SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white24))),
+                            errorWidget: (_, __, ___) => Center(
+                              child: Text(
+                                _steamName.isNotEmpty ? _steamName[0].toUpperCase() : '?',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          )
+                        : Center(
+                            child: Text(
+                              _steamName.isNotEmpty ? _steamName[0].toUpperCase() : (_steamId.isNotEmpty ? _steamId[0].toUpperCase() : '?'),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -563,7 +638,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_steamId.isNotEmpty ? _steamId : 'Giriş yapılmadı',
+                      Text(
+                          _steamName.isNotEmpty
+                              ? _steamName
+                              : (_steamId.isNotEmpty ? _steamId : 'Giriş yapılmadı'),
                           style: TextStyle(
                               color: _steamId.isNotEmpty
                                   ? Colors.white

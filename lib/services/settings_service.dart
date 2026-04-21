@@ -32,6 +32,9 @@ class GameEntry {
 /// Persists the Steam ID and the list of tracked games.
 class SettingsService {
   static const _steamIdKey = 'steam_id';
+  static const _steamId64Key = 'steam_id_64';
+  static const _profileNameKey = 'steam_profile_name';
+  static const _profileAvatarKey = 'steam_profile_avatar';
   static const _gamesKey = 'tracked_games';
 
   static final List<GameEntry> _defaultGames = [];
@@ -44,6 +47,36 @@ class SettingsService {
   Future<void> setSteamId(String id) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_steamIdKey, id);
+  }
+
+  Future<String> getSteamId64() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_steamId64Key) ?? '';
+  }
+
+  Future<void> setSteamId64(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_steamId64Key, id);
+  }
+
+  Future<String> getProfileName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_profileNameKey) ?? '';
+  }
+
+  Future<void> setProfileName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_profileNameKey, name);
+  }
+
+  Future<String> getProfileAvatar() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_profileAvatarKey) ?? '';
+  }
+
+  Future<void> setProfileAvatar(String avatar) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_profileAvatarKey, avatar);
   }
 
   Future<List<GameEntry>> getGames() async {
